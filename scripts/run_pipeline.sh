@@ -116,7 +116,7 @@ done
 
 if (( config_enabled )) && [[ -f "$config_path" ]]; then
   eval "$(
-    python3 - <<'PY'
+    python3 - "$config_path" <<'PY'
 import sys
 from pathlib import Path
 
@@ -146,7 +146,6 @@ print(f"cfg_map_frame_enabled={'1' if to_bool(data.get('map_frame_enabled','')) 
 print(f"cfg_map_source_frame='{data.get('map_source_frame','')}'")
 print(f"cfg_map_target_frame='{data.get('map_target_frame','')}'")
 PY
-    "$config_path"
   )"
 
   if (( ! topic_set )) && [[ -n "${cfg_topic:-}" ]]; then topic="$cfg_topic"; fi
@@ -305,40 +304,6 @@ if (( map_frame )); then
     --frames-csv \"${pcdet_dir}/frames.csv\" \
     --pred \"$pred_path\" \
     --out \"$map_pred_out\" \
-    --source-frame \"$map_source_frame\" \
-    --target-frame \"$map_target_frame\""
-
-  "$python" src/export/bin_to_pcd_sequence.py \
-    --in-dir "${map_dir}" \
-    --out-dir "${map_pcd_dir}"
-fi
-
-if (( map_frame )); then
-  pred_path="${map_labels_override}"
-  if [[ -z "$pred_path" ]]; then
-    if (( track )); then
-      pred_path="data/processed/${bag_id}/${model_name}/ped_tracks_${model_name}_${bag_id}.jsonl"
-    else
-      pred_path="data/processed/${bag_id}/${model_name}/predictions_${model_name}_${bag_id}.jsonl"
-    fi
-  fi
-
-  echo "+ map-frame transform (bins + labels)"
-  bash -lc "source /opt/ros/noetic/setup.bash; python3 scripts/utils/transform_bins_tf.py \
-    --bag \"$bag\" \
-    --frames-csv \"${pcdet_dir}/frames.csv\" \
-    --in-dir \"${pcdet_dir}\" \
-    --out-dir \"${map_dir}\" \
-    --source-frame \"$map_source_frame\" \
-    --target-frame \"$map_target_frame\""
-
-  cp -f "${pcdet_dir}/frames.csv" "${map_dir}/frames.csv"
-
-  bash -lc "source /opt/ros/noetic/setup.bash; python3 scripts/utils/transform_labels_tf.py \
-    --bag \"$bag\" \
-    --frames-csv \"${pcdet_dir}/frames.csv\" \
-    --pred \"$pred_path\" \
-    --out \"${pred_path%.jsonl}_map_${bag_id}.jsonl\" \
     --source-frame \"$map_source_frame\" \
     --target-frame \"$map_target_frame\""
 
