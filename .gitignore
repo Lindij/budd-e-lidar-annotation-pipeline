@@ -1,0 +1,31 @@
+# Large raw data
+data/raw/rosbags/
+
+# Intermediate/derived data
+data/interim/
+data/processed/
+data/labels/
+
+# Optional local files
+*.log
+.DS_Store
+Thumbs.db
+
+# Python/venv
+.venv/
+__pycache__/
+*.pyc
+
+# Segments.ai
+.env
+
+# OpenPCDet build artifacts
+external/openpcdet/build/
+external/openpcdet/ckpts/
+external/openpcdet/pcdet.egg-info/
+
+# Reports build artifacts
+*.aux
+*.log
+*.out
+*.toc

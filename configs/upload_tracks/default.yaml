@@ -1,0 +1,7 @@
+dataset: Mahi_j/budd-e
+model_name: pointrcnn_iou
+labelset: tracks
+pcd_dir_template: data/interim/{bag_id}_map_pcd
+frames_csv_template: data/interim/{bag_id}_map/frames.csv
+pred_template: data/processed/{bag_id}/{model_name}/ped_tracks_{model_name}_interp_nomotion_map_{bag_id}.jsonl
+sample_prefix_template: {bag_id}_{model_name}_map

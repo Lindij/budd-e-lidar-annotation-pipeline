@@ -1,0 +1,12 @@
+topic: /rslidar_points
+model_config: external/openpcdet/tools/cfgs/kitti_models/pointrcnn_iou_budde.yaml
+model_ckpt: external/openpcdet/ckpts/pointrcnn_iou_kitti.pth
+track_enabled: true
+track_max_age: 30
+track_interpolate: 30
+track_dist: 0.5
+track_use_motion: false
+map_frame_enabled: true
+map_source_frame: rslidar
+map_target_frame: map
+label_class: Pedestrian
