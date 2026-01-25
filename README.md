@@ -55,6 +55,12 @@ hard dependency failures:
 scripts/setup_env.sh --apply-openpcdet-patch
 ```
 
+### Model checkpoints
+Download the PointRCNN-IoU KITTI checkpoint:
+```bash
+scripts/setup_models.sh --pointrcnn-iou
+```
+
 ## End-to-End Pipeline (CLI)
 Main entrypoint:
 ```bash

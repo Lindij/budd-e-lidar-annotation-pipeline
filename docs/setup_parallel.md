@@ -38,6 +38,11 @@ Apply the optional datasets patch to avoid missing dependency errors:
 scripts/setup_env.sh --apply-openpcdet-patch
 ```
 
+Download the default model checkpoint:
+```bash
+scripts/setup_models.sh --pointrcnn-iou
+```
+
 ## 5) Segments.ai API key
 Create `.env` in repo root:
 ```
