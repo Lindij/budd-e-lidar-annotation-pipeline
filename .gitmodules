@@ -1,0 +1,3 @@
+[submodule "external/openpcdet"]
+	path = external/openpcdet
+	url = https://github.com/open-mmlab/OpenPCDet.git
