@@ -48,6 +48,13 @@ python -m pip install --upgrade pip setuptools wheel
 ```
 For full parallel-machine setup, see `docs/setup_parallel.md`.
 
+### OpenPCDet patch (optional datasets)
+OpenPCDet may import optional datasets (e.g., Argo2) that are not installed. Apply this patch to avoid
+hard dependency failures:
+```bash
+scripts/setup_env.sh --apply-openpcdet-patch
+```
+
 ## End-to-End Pipeline (CLI)
 Main entrypoint:
 ```bash

@@ -1,0 +1,53 @@
+diff --git a/pcdet/datasets/__init__.py b/pcdet/datasets/__init__.py
+index 47c3900..71a43f0 100644
+--- a/pcdet/datasets/__init__.py
++++ b/pcdet/datasets/__init__.py
+@@ -6,28 +6,32 @@ from torch.utils.data import DistributedSampler as _DistributedSampler
+ from pcdet.utils import common_utils
+ 
+ from .dataset import DatasetTemplate
+-from .kitti.kitti_dataset import KittiDataset
+-from .nuscenes.nuscenes_dataset import NuScenesDataset
+-from .waymo.waymo_dataset import WaymoDataset
+-from .pandaset.pandaset_dataset import PandasetDataset
+-from .lyft.lyft_dataset import LyftDataset
+-from .once.once_dataset import ONCEDataset
+-from .argo2.argo2_dataset import Argo2Dataset
+-from .custom.custom_dataset import CustomDataset
+ 
+ __all__ = {
+     'DatasetTemplate': DatasetTemplate,
+-    'KittiDataset': KittiDataset,
+-    'NuScenesDataset': NuScenesDataset,
+-    'WaymoDataset': WaymoDataset,
+-    'PandasetDataset': PandasetDataset,
+-    'LyftDataset': LyftDataset,
+-    'ONCEDataset': ONCEDataset,
+-    'CustomDataset': CustomDataset,
+-    'Argo2Dataset': Argo2Dataset
+ }
+ 
+ 
++def _try_register(name, import_path):
++    try:
++        module_path, cls_name = import_path.rsplit('.', 1)
++        module = __import__(module_path, fromlist=[cls_name])
++        __all__[name] = getattr(module, cls_name)
++    except Exception:
++        # Optional dataset dependencies may be missing; skip registration.
++        pass
++
++
++_try_register('KittiDataset', 'pcdet.datasets.kitti.kitti_dataset.KittiDataset')
++_try_register('NuScenesDataset', 'pcdet.datasets.nuscenes.nuscenes_dataset.NuScenesDataset')
++_try_register('WaymoDataset', 'pcdet.datasets.waymo.waymo_dataset.WaymoDataset')
++_try_register('PandasetDataset', 'pcdet.datasets.pandaset.pandaset_dataset.PandasetDataset')
++_try_register('LyftDataset', 'pcdet.datasets.lyft.lyft_dataset.LyftDataset')
++_try_register('ONCEDataset', 'pcdet.datasets.once.once_dataset.ONCEDataset')
++_try_register('Argo2Dataset', 'pcdet.datasets.argo2.argo2_dataset.Argo2Dataset')
++_try_register('CustomDataset', 'pcdet.datasets.custom.custom_dataset.CustomDataset')
++
++
+ class DistributedSampler(_DistributedSampler):
+ 
+     def __init__(self, dataset, num_replicas=None, rank=None, shuffle=True):

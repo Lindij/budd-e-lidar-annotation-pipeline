@@ -33,6 +33,11 @@ source .venv/bin/activate
 python -c "import pcdet; print(pcdet.__file__)"
 ```
 
+Apply the optional datasets patch to avoid missing dependency errors:
+```bash
+scripts/setup_env.sh --apply-openpcdet-patch
+```
+
 ## 5) Segments.ai API key
 Create `.env` in repo root:
 ```

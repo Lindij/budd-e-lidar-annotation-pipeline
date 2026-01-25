@@ -3,6 +3,39 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
+Usage: scripts/setup_env.sh [--apply-openpcdet-patch]
+
+Options:
+  --apply-openpcdet-patch   Apply optional dataset registry patch to OpenPCDet
+EOF
+}
+
+apply_openpcdet_patch=0
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --apply-openpcdet-patch) apply_openpcdet_patch=1; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown arg: $1" >&2; usage; exit 1 ;;
+  esac
+done
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_root"
+
+if (( apply_openpcdet_patch )); then
+  if [[ -f "scripts/patches/openpcdet_optional_datasets.patch" ]]; then
+    git -C external/openpcdet apply --check "../scripts/patches/openpcdet_optional_datasets.patch" >/dev/null 2>&1 || true
+    git -C external/openpcdet apply "../scripts/patches/openpcdet_optional_datasets.patch" || true
+    echo "Applied OpenPCDet optional-datasets patch."
+  else
+    echo "Patch not found: scripts/patches/openpcdet_optional_datasets.patch" >&2
+    exit 1
+  fi
+fi
+
+usage() {
+  cat <<'EOF'
 Usage:
   scripts/setup_env.sh cuda
   scripts/setup_env.sh ros
