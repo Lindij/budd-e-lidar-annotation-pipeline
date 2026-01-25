@@ -1,0 +1,128 @@
+\documentclass[11pt,a4paper]{report}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{titlesec}
+\usepackage{enumitem}
+
+\titleformat{\chapter}{\normalfont\huge\bfseries}{\thechapter.}{1em}{}
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    \vspace*{1.5cm}
+    {\LARGE Politecnico di Milano\par}
+    \vspace{0.5cm}
+    {\Large Stakeholder Expense Report\par}
+    \vspace{1.5cm}
+    {\huge BUDD-e LiDAR Pedestrian Annotation Pipeline\par}
+    \vspace{1.0cm}
+    {\large Project Period: \underline{\hspace{5cm}}\par}
+    \vspace{0.5cm}
+    {\large Prepared by: \underline{\hspace{7cm}}\par}
+    \vspace{0.5cm}
+    {\large Contact: \underline{\hspace{8cm}}\par}
+    \vfill
+    {\large Date: \underline{\hspace{5cm}}\par}
+\end{titlepage}
+
+\tableofcontents
+\clearpage
+
+\chapter{Executive Summary}
+This report documents the work completed to establish a LiDAR-only pipeline for pedestrian 3D bounding box annotation from ROS1 bag data recorded by the BUDD-e mobile robot in a hospital environment. The work includes data extraction, model inference with OpenPCDet, export of labels, and integration with Segments.ai for review and annotation.
+
+\chapter{Objectives}
+\begin{itemize}[leftmargin=2em]
+    \item Enable ROS bag ingestion and conversion to OpenPCDet-compatible point cloud frames.
+    \item Run pretrained LiDAR-only 3D detection to generate pedestrian bounding boxes.
+    \item Export annotations in reusable formats and upload to a web-based labeling UI.
+    \item Prepare the workflow for future tracking/association across frames.
+\end{itemize}
+
+\chapter{Data and Inputs}
+\begin{itemize}[leftmargin=2em]
+    \item ROS1 bag files containing \texttt{/rslidar\_points} (sensor\_msgs/PointCloud2).
+    \item Example bag used for development: \texttt{File\_2023-06-27-16-15-39.bag} (2:07 min).
+    \item Generated point clouds: \texttt{.bin} and \texttt{.pcd} sequence files.
+\end{itemize}
+
+\chapter{Pipeline Overview}
+\section*{Ingestion}
+\begin{itemize}[leftmargin=2em]
+    \item ROS bag inspection to verify topics and message counts.
+    \item Extraction of \texttt{/rslidar\_points} into per-frame point clouds.
+    \item Conversion to OpenPCDet format: \texttt{(x, y, z, intensity)} float32.
+\end{itemize}
+
+\section*{Detection}
+\begin{itemize}[leftmargin=2em]
+    \item OpenPCDet installed and configured with CUDA-enabled PyTorch.
+    \item Baseline model: PointPillars (KITTI pretrained).
+    \item Outputs: 3D bounding boxes and confidence scores per frame.
+\end{itemize}
+
+\section*{Label Export and Review}
+\begin{itemize}[leftmargin=2em]
+    \item Labels exported to JSONL and MATLAB formats.
+    \item PCD sequences prepared for external annotation tools.
+    \item Segments.ai dataset created for 3D web-based review and correction.
+\end{itemize}
+
+\chapter{Work Performed}
+\begin{itemize}[leftmargin=2em]
+    \item Installed and configured ROS Noetic in WSL.
+    \item Installed OpenPCDet dependencies, CUDA bindings, and compiled ops.
+    \item Implemented scripts:
+    \begin{itemize}[leftmargin=2em]
+        \item ROS bag to OpenPCDet frames extraction.
+        \item Model inference over frame sequences.
+        \item Export to MATLAB and PCD sequences.
+        \item Segments.ai upload of sequences and prelabels.
+    \end{itemize}
+    \item Uploaded prelabels to Segments.ai (pointcloud cuboid sequence).
+\end{itemize}
+
+\chapter{Deliverables}
+\begin{longtable}{p{0.35\textwidth} p{0.6\textwidth}}
+\textbf{Deliverable} & \textbf{Description} \\
+\hline
+Point cloud frames & OpenPCDet-compatible \texttt{.bin} files per frame \\
+PCD sequence & \texttt{.pcd} sequence for external visualization tools \\
+Predictions JSONL & Raw model outputs (boxes, scores, labels) \\
+Pedestrian export & Filtered pedestrian-only labels (JSONL/CSV/MAT) \\
+Segments.ai dataset & Web UI with prelabels for review and correction \\
+\end{longtable}
+
+\chapter{Issues and Mitigations}
+\begin{itemize}[leftmargin=2em]
+    \item \textbf{Model performance}: Baseline KITTI pretrained PointPillars is weak for indoor pedestrians.
+    \item \textbf{Viewer performance}: Large sequences can overload web labeling UI.
+    \item \textbf{Mitigation}: Split sequences into smaller chunks and use pedestrian-only filtering for review.
+\end{itemize}
+
+\chapter{Next Steps}
+\begin{itemize}[leftmargin=2em]
+    \item Evaluate stronger LiDAR-only models (CenterPoint, PV-RCNN).
+    \item Apply simple tracking to associate boxes across frames.
+    \item Refine upload pipeline with smaller clips and higher-confidence prelabels.
+    \item Automate end-to-end script with arguments:
+    \begin{itemize}[leftmargin=2em]
+        \item \texttt{--bag}, \texttt{--topic}, \texttt{--model-config}, \texttt{--checkpoint}
+        \item \texttt{--labelset}, \texttt{--upload}, \texttt{--chunk-size}
+    \end{itemize}
+\end{itemize}
+
+\chapter{Expense Summary}
+Please complete this section with the project-specific costs and time spent.
+\begin{itemize}[leftmargin=2em]
+    \item Personnel hours: \underline{\hspace{5cm}}
+    \item Compute resources: \underline{\hspace{6cm}}
+    \item Software/licenses: \underline{\hspace{6cm}}
+    \item Other expenses: \underline{\hspace{6cm}}
+\end{itemize}
+
+\end{document}

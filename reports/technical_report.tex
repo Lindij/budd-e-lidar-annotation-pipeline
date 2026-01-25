@@ -1,0 +1,436 @@
+\documentclass[a4paper,12pt]{report}
+\usepackage{ifthen}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{xcolor}
+
+\geometry{margin=1in}
+
+\IfFileExists{polimi-report-style.sty}{\usepackage{polimi-report-style}}{}
+
+\title{Pedestrian LiDAR Dataset Annotation Pipeline}
+\author{Mahdieh Jalali}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This report documents the design, implementation, and evaluation of a LiDAR-only pipeline that converts ROS1 bag recordings from a hospital mobile robot into 3D pedestrian bounding box prelabels suitable for annotation in Segments.ai. The project targets reproducible and auditable data preparation for academic research at Politecnico di Milano, with a focus on indoor environments where domain mismatch degrades the performance of standard KITTI-pretrained detectors. The system integrates ROS bag ingestion, point cloud conversion, OpenPCDet inference, pedestrian filtering, temporal tracking, optional static-scene filtering, and automated upload to a pointcloud-cuboid sequence labeling platform. The report details data formats, module responsibilities, design decisions, failure modes, and validation observations, and it outlines a roadmap for future extensions.
+\end{abstract}
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+\chapter{Introduction}
+\section{Project Context}
+This project addresses the need for a robust, LiDAR-only prelabeling workflow for indoor pedestrian annotation in hospital environments. The target data consists of ROS1 bag recordings containing dense point clouds from a mobile robot. Existing pretrained detectors are optimized for outdoor driving scenarios and exhibit degraded performance indoors. The immediate objective is to generate prelabels that accelerate manual annotation, enabling high-quality dataset creation for downstream robotics and perception research.
+
+\section{Motivation}
+The primary motivation is to establish a reproducible pipeline that transforms ROS1 bag data into temporally consistent 3D pedestrian bounding boxes, thereby reducing annotation effort in Segments.ai. The system is designed to be modular and auditable, so each stage can be rerun or replaced without destabilizing the rest of the pipeline.
+
+\section{Contributions}
+Key contributions of this work are:
+\begin{itemize}
+\item A complete bag-to-prelabel pipeline for LiDAR-only pedestrian annotation.
+\item Integration with OpenPCDet for 3D detection using KITTI-pretrained models.
+\item Automated Segments.ai dataset creation and sequence upload with retry handling.
+\item A lightweight tracking and interpolation module for temporal consistency.
+\item A static-scene filtering module to isolate moving points for improved detection.
+\end{itemize}
+
+\chapter{Related Work}
+\section{LiDAR Datasets and Annotation}
+Public datasets such as KITTI and nuScenes provide standard benchmarks and labeling tools for 3D detection. However, their domains and sensor setups differ from indoor hospital environments. Indoor datasets often have different scale, clutter, and pedestrian behavior, which motivates domain-specific prelabel pipelines.
+
+\section{3D Detection Frameworks}
+OpenPCDet is a widely adopted research framework for point cloud detection. It provides pretrained models, consistent data pipelines, and efficient inference operators, making it suitable for rapid prototyping and baseline establishment.
+
+\section{Labeling Platforms}
+Segments.ai provides a pointcloud-cuboid sequence task type that supports temporal labeling and review. The platform imposes sequence length limits and rate constraints, requiring careful handling during upload.
+
+\chapter{Problem Definition and Objectives}
+\section{Problem Statement}
+Given a ROS1 bag containing LiDAR point clouds from a hospital robot, produce a temporally consistent sequence of 3D pedestrian bounding boxes for annotation review. The output must be compatible with Segments.ai and structured for reproducibility and auditability.
+
+\section{Objectives}
+\begin{itemize}
+\item Convert ROS1 PointCloud2 messages into OpenPCDet-compatible binary frames.
+\item Run pretrained 3D detection models to produce prelabels.
+\item Filter and export pedestrian detections with timestamps.
+\item Provide optional tracking and interpolation for temporal continuity.
+\item Upload sequences and labels to Segments.ai within platform constraints.
+\end{itemize}
+
+\section{Constraints}
+\begin{itemize}
+\item ROS1 Noetic is required for bag parsing.
+\item GPU acceleration is required for practical inference speed.
+\item Segments.ai enforces sequence length limits (1500 frames).
+\item Model checkpoints are KITTI-pretrained, with known indoor domain mismatch.
+\end{itemize}
+
+\chapter{Dataset Description}
+\section{Source Data}
+The primary data source is a ROS1 bag file containing LiDAR data from a hospital mobile robot. The key topic is \texttt{/rslidar\_points} (sensor\_msgs/PointCloud2). A representative recording includes 2560 LiDAR frames over approximately two minutes.
+
+\section{Data Organization}
+The repository follows a structured layout:
+\begin{table}[H]
+\centering
+\caption{Repository data layout relevant to dataset handling}
+\label{tab:data_layout}
+\begin{tabular}{p{0.3\textwidth} p{0.6\textwidth}}
+\toprule
+Path & Description \\
+\midrule
+\texttt{data/raw/rosbags} & Raw ROS1 bag files \\
+\texttt{data/interim} & Extracted frames and intermediate artifacts \\
+\texttt{data/interim/pcdet\_demo} & OpenPCDet-compatible \texttt{.bin} frames and \texttt{frames.csv} \\
+\texttt{data/interim/pcdet\_demo\_pcd} & PCD sequence for Segments.ai \\
+\texttt{data/labels} & Model predictions and filtered label exports \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Annotation Format}
+The pipeline produces JSONL records per frame, with either full model outputs or pedestrian-only exports:
+\begin{itemize}
+\item \texttt{predictions.jsonl}: per-frame arrays of boxes, labels, and scores.
+\item \texttt{pedestrians.jsonl}: filtered per-box records with frame timestamps.
+\item \texttt{ped\_tracks\_interp.jsonl}: tracked and interpolated labels with track IDs.
+\end{itemize}
+
+\section{Dataset Card}
+The dataset card specifies a hospital environment, LiDAR sensor data, and a requirement to avoid patient-identifiable information. Licensing and contact details are to be defined.
+
+\begin{figure}[H]
+\centering
+\IfFileExists{images/placeholder_dataset_structure.png}{\includegraphics[width=0.85\textwidth]{images/placeholder_dataset_structure.png}}{\fbox{\parbox{0.85\textwidth}{Dataset folder structure placeholder}}}
+\caption{Dataset and output folder structure}
+\label{fig:dataset_structure}
+\end{figure}
+
+\chapter{System Architecture}
+\section{Overview}
+The pipeline is modular and staged. Each step produces explicit artifacts, enabling partial reruns and independent validation. The main stages are: ingestion, preprocessing, inference, filtering, tracking, and upload.
+
+\begin{figure}[H]
+\centering
+\IfFileExists{images/placeholder_pipeline.png}{\includegraphics[width=0.85\textwidth]{images/placeholder_pipeline.png}}{\fbox{\parbox{0.85\textwidth}{Overall annotation pipeline architecture placeholder}}}
+\caption{Overall annotation pipeline architecture}
+\label{fig:pipeline}
+\end{figure}
+
+\section{Module Responsibilities}
+\begin{table}[H]
+\centering
+\caption{Core modules and responsibilities}
+\label{tab:modules}
+\begin{tabular}{p{0.32\textwidth} p{0.58\textwidth}}
+\toprule
+Module & Responsibility \\
+\midrule
+\texttt{src/ingest/rosbag\_to\_pcdet.py} & Convert ROS1 PointCloud2 messages to \texttt{.bin} frames and \texttt{frames.csv} \\
+\texttt{src/inference/pcdet\_infer\_dir.py} & Run OpenPCDet inference on frame sequences \\
+\texttt{src/export/bin\_to\_pcd\_sequence.py} & Convert \texttt{.bin} frames to \texttt{.pcd} sequence \\
+\texttt{src/export/export\_pedestrians.py} & Filter predictions by class and score, export JSONL/CSV \\
+\texttt{tools/track\_pedestrians.py} & Assign track IDs and interpolate missing detections \\
+\texttt{tools/filter\_static\_points.py} & Build static voxel map and filter static points \\
+\texttt{src/export/segments\_upload\_sequence.py} & Upload frames and labels to Segments.ai \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Configuration and Scripts}
+Configuration files include \texttt{configs/pipeline.yaml} and \texttt{configs/ros\_topics.yaml}. Shell scripts provide reproducible execution for key scenarios such as static filtering and tracked upload.
+
+\begin{figure}[H]
+\centering
+\IfFileExists{images/placeholder_scripts.png}{\includegraphics[width=0.85\textwidth]{images/placeholder_scripts.png}}{\fbox{\parbox{0.85\textwidth}{Pipeline scripts and configs placeholder}}}
+\caption{Scripts and configuration entry points}
+\label{fig:scripts}
+\end{figure}
+
+\chapter{Annotation Pipeline}
+\section{Ingestion: ROS Bag to Point Clouds}
+The ingestion step reads \texttt{/rslidar\_points} and writes OpenPCDet-compatible frames. Each frame is stored as a float32 array with \((x,y,z,intensity)\). Intensity is normalized to \([0,1]\) if needed, and a \texttt{frames.csv} file records timestamps and metadata.
+
+\begin{algorithm}[H]
+\caption{ROS bag to OpenPCDet frame extraction}
+\label{alg:ingest}
+\begin{algorithmic}[1]
+\Require ROS bag path, topic, output directory, stride, max frames
+\Ensure \texttt{.bin} frames and \texttt{frames.csv}
+\For{each PointCloud2 message on topic}
+  \If{message index mod stride $\neq 0$}
+    \State continue
+  \EndIf
+  \State read points (x,y,z[,intensity])
+  \If{intensity missing}
+    \State append zeros as intensity channel
+  \EndIf
+  \State optional z-shift for LiDAR height correction
+  \State write \texttt{.bin} frame and append to \texttt{frames.csv}
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\section{Inference}
+Inference uses OpenPCDet with KITTI-pretrained checkpoints. A custom configuration was introduced for PointRCNN-IoU to reduce the number of points per frame, aligning with the lower point counts observed in indoor scans.
+
+\section{Filtering and Export}
+Pedestrian filtering produces a JSONL file with per-box records, plus a CSV table with timestamps for external review. Export to MATLAB is supported for analysis workflows.
+
+\section{Tracking and Interpolation}
+The tracking module performs greedy center-distance matching, optionally using a constant-velocity model to predict track positions across gaps. Missing detections can be interpolated, producing temporally consistent tracks.
+
+\section{Static-Scene Filtering}
+Static points are filtered by building a voxel occupancy map over time. Voxels appearing in a high fraction of frames are marked static and removed. The filtered frames are then used for inference and tracking.
+
+\begin{figure}[H]
+\centering
+\IfFileExists{images/placeholder_static_filter.png}{\includegraphics[width=0.85\textwidth]{images/placeholder_static_filter.png}}{\fbox{\parbox{0.85\textwidth}{Static-scene filtering placeholder}}}
+\caption{Static-scene filtering based on voxel persistence}
+\label{fig:static_filter}
+\end{figure}
+
+\section{Segments.ai Upload}
+The upload module ensures that data are packaged as pointcloud-cuboid sequences, handles rate limiting with retries, and supports labelset management. Sequence splitting is used to satisfy platform limits.
+
+\begin{figure}[H]
+\centering
+\IfFileExists{images/placeholder_segments_ui.png}{\includegraphics[width=0.85\textwidth]{images/placeholder_segments_ui.png}}{\fbox{\parbox{0.85\textwidth}{Segments.ai UI placeholder}}}
+\caption{Segments.ai sequence labeling interface placeholder}
+\label{fig:segments_ui}
+\end{figure}
+
+\chapter{Implementation Details}
+\section{Data Formats}
+\subsection{OpenPCDet Frames}
+Each frame is a binary file containing float32 values in \((x,y,z,intensity)\) order. The index determines the frame ID.
+
+\subsection{frames.csv}
+The metadata file includes \texttt{frame\_idx}, \texttt{stamp}, \texttt{num\_points}, \texttt{bag}, \texttt{topic}, and \texttt{z\_shift}. This provides alignment between frames and ROS timestamps.
+
+\subsection{Prediction JSONL}
+Prediction records are structured as:
+\begin{itemize}
+\item \texttt{frame\_id}: integer index
+\item \texttt{boxes\_lidar}: list of \((x,y,z,dx,dy,dz,yaw)\)
+\item \texttt{scores}: confidence per box
+\item \texttt{labels}: class names
+\end{itemize}
+
+\subsection{Tracked JSONL}
+Tracked records include \texttt{track\_id} and an \texttt{interpolated} flag, enabling downstream inspection and correction.
+
+\section{Key Algorithms}
+\subsection{Greedy Track Association}
+Tracks are matched to detections by nearest-center distance under a threshold. Motion prediction optionally shifts track centers using estimated velocities.
+
+\begin{algorithm}[H]
+\caption{Greedy tracking with optional motion model}
+\label{alg:tracking}
+\begin{algorithmic}[1]
+\Require detections per frame, distance threshold, motion parameters
+\For{each frame}
+  \State compute predicted track centers (optional)
+  \State find all track-detection pairs within threshold
+  \State sort pairs by distance and assign greedily
+  \State create new tracks for unmatched detections
+  \State age unmatched tracks and drop if exceeded max age
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Static Voxel Filtering}
+Voxels are marked static if they appear in a minimum fraction of frames. Points in static voxels are removed from each frame.
+
+\section{Error Handling and Edge Cases}
+\begin{itemize}
+\item Empty frames are skipped during ingestion and handled during filtering.
+\item Label uploads fail fast if dataset categories are missing.
+\item Upload retries mitigate rate limits and throttling (HTTP 429).
+\item \texttt{--allow-empty} permits upload when detections are absent.
+\item \texttt{--start-index} supports resuming inference runs mid-sequence.
+\end{itemize}
+
+\section{Reproducibility}
+Reproduction steps are documented in \texttt{docs/reproduce\_steps.md}, including environment assumptions and commands. Shell scripts provide a standardized execution order.
+
+\chapter{Experiments and Validation}
+\section{Baseline Model Evaluation}
+PointPillars (KITTI pretrained) was evaluated as a baseline. Qualitative inspection showed limited pedestrian accuracy in indoor hospital scenes, motivating a model upgrade.
+
+\section{PointRCNN-IoU Upgrade}
+PointRCNN-IoU was selected for improved quality. A custom configuration reduced the required number of points per frame, enabling stable inference on indoor scans.
+
+\section{Static-Filtered Variant}
+Static-scene filtering was introduced to reduce background clutter. Inference and tracking on filtered frames produced a second dataset variant for comparison.
+
+\section{Tracking and Interpolation}
+Temporal consistency was assessed through Segments.ai previews and inspection of track continuity across occlusions. Interpolation reduced gaps but requires cautious validation to avoid propagating errors.
+
+\begin{table}[H]
+\centering
+\caption{Qualitative comparison of pipeline variants}
+\label{tab:qualitative}
+\begin{tabular}{p{0.35\textwidth} p{0.55\textwidth}}
+\toprule
+Variant & Observed outcome \\
+\midrule
+PointPillars baseline & Fast but low quality; false positives and missed pedestrians \\
+PointRCNN-IoU & Improved box quality and recall; slower inference \\
+Static-filtered + tracking & Reduced clutter, improved temporal consistency; experimental \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\chapter{Results and Discussion}
+\section{Outcome Summary}
+The pipeline delivers a working end-to-end system: ROS bag ingestion, OpenPCDet inference, prelabel filtering, temporal tracking, and Segments.ai upload. Two primary label tracks exist: PointRCNN-IoU prelabels and a motion-aware, static-filtered variant.
+
+\section{Usability in Annotation}
+Temporal consistency from tracking and interpolation improves annotator efficiency, while sequence splitting ensures platform compliance. The system is suitable for iterative review and refinement.
+
+\section{Engineering Trade-offs}
+\begin{itemize}
+\item Accuracy vs. speed: PointRCNN-IoU provides better boxes but is slower.
+\item Automation vs. correctness: Interpolation accelerates review but may introduce errors.
+\item Domain mismatch: KITTI-pretrained models limit indoor performance without further fine-tuning.
+\end{itemize}
+
+\chapter{Limitations and Challenges}
+\section{Domain Mismatch}
+KITTI-pretrained models are not optimized for indoor hospital scenes, resulting in missed detections and false positives.
+
+\section{Platform Constraints}
+Segments.ai limits sequences to 1500 frames and may throttle uploads. The pipeline addresses this with chunked uploads and retry logic.
+
+\section{Tracking Assumptions}
+The tracking module uses a simple distance-based association and constant-velocity approximation, which may fail in dense crowds or rapid motion.
+
+\section{Hardware and Environment}
+Inference requires GPU acceleration and a compatible OpenPCDet build. ROS bag extraction depends on ROS Noetic availability.
+
+\chapter{Future Work}
+\section{Model Improvements}
+Evaluate CenterPoint, PV-RCNN, and indoor-oriented detectors. Consider fine-tuning on a small manually annotated subset.
+
+\section{Quantitative Metrics}
+Introduce formal metrics such as precision, recall, and track continuity against a labeled subset to validate improvements.
+
+\section{Advanced Tracking}
+Replace greedy association with multi-hypothesis tracking or Kalman filters, and incorporate IoU-based association in 3D space.
+
+\section{Annotation Interface Enhancements}
+Integrate additional quality controls in Segments.ai, including label consistency checks and automated review scripts.
+
+\chapter{Conclusion}
+This project delivers a reproducible and modular LiDAR-only prelabeling pipeline tailored to indoor hospital data. It integrates ROS bag ingestion, OpenPCDet inference, pedestrian filtering, tracking, static-scene filtering, and Segments.ai upload into a single workflow. The system is suitable for academic data preparation at Politecnico di Milano and establishes a foundation for future model improvement and rigorous evaluation.
+
+\appendix
+\chapter{Key Commands and Listings}
+\section{End-to-End Pipeline Entry Point}
+\begin{lstlisting}[language=bash,caption={CLI entry point for end-to-end pipeline}]
+python tools/run_pipeline.py \
+  --bag data/raw/rosbags/File_2023-06-27-16-15-39.bag \
+  --topic /rslidar_points \
+  --model-config external/openpcdet/tools/cfgs/kitti_models/pointpillar.yaml \
+  --model-ckpt external/openpcdet/ckpts/pointpillar_kitti.pth \
+  --label-filter Pedestrian \
+  --segments-dataset Mahi_j/budd-e_openpcdet \
+  --segments-sample budd-e_ped_0000_0299 \
+  --segments-labelset prelabels \
+  --segments-max-frames 300 \
+  --upload
+\end{lstlisting}
+
+\section{Static Filtering and Tracking}
+\begin{lstlisting}[language=bash,caption={Static filtering, inference, and tracking}]
+python tools/filter_static_points.py \
+  --in-dir data/interim/pcdet_demo \
+  --out-dir data/interim/pcdet_demo_moving \
+  --voxel-size 0.2 \
+  --static-min-frames 50 \
+  --static-min-ratio 0.6 \
+  --write-static-npz data/interim/static_map.npz
+
+python src/inference/pcdet_infer_dir.py \
+  --cfg-file external/openpcdet/tools/cfgs/kitti_models/pointrcnn_iou_budde.yaml \
+  --ckpt external/openpcdet/ckpts/pointrcnn_iou_kitti.pth \
+  --data-path data/interim/pcdet_demo_moving \
+  --ext .bin \
+  --out data/labels/pcdet_pointrcnn_iou/predictions_moving.jsonl
+
+python tools/track_pedestrians.py \
+  --pred data/labels/pcdet_pointrcnn_iou/predictions_moving.jsonl \
+  --frames data/interim/pcdet_demo/frames.csv \
+  --label Pedestrian \
+  --score 0.3 \
+  --dist-thresh 0.5 \
+  --max-age 20 \
+  --use-motion \
+  --motion-max-gap 20 \
+  --interpolate-max-gap 20 \
+  --out-jsonl data/labels/pcdet_pointrcnn_iou/ped_tracks_interp_static.jsonl
+\end{lstlisting}
+
+\chapter{Bibliography}
+\begin{filecontents*}{references.bib}
+@inproceedings{kitti2012,
+  title={Are we ready for autonomous driving? The KITTI vision benchmark suite},
+  author={Geiger, Andreas and Lenz, Philip and Urtasun, Raquel},
+  booktitle={CVPR},
+  year={2012}
+}
+@inproceedings{nuscenes2019,
+  title={nuScenes: A multimodal dataset for autonomous driving},
+  author={Caesar, Holger and others},
+  booktitle={CVPR},
+  year={2020}
+}
+@article{openpcdet2020,
+  title={OpenPCDet: An open-source toolbox for 3D object detection from point clouds},
+  author={OpenPCDet Authors},
+  journal={arXiv preprint arXiv:2008.06899},
+  year={2020}
+}
+@inproceedings{pointrcnn2019,
+  title={PointRCNN: 3D object proposal generation and detection from point cloud},
+  author={Shi, Shaoshuai and Wang, Xiaogang and Li, Hongsheng},
+  booktitle={CVPR},
+  year={2019}
+}
+@inproceedings{pointpillars2019,
+  title={PointPillars: Fast Encoders for Object Detection from Point Clouds},
+  author={Lang, Alex and Vora, Sourabh and Caesar, Holger and Zhou, Lubing and Yang, Jiong and Beijbom, Oscar},
+  booktitle={CVPR},
+  year={2019}
+}
+@article{segmentsai,
+  title={Segments.ai: End-to-end data annotation platform},
+  author={Segments.ai},
+  journal={https://segments.ai},
+  year={2024}
+}
+\end{filecontents*}
+
+\bibliographystyle{ieeetr}
+\bibliography{references}
+
+\end{document}

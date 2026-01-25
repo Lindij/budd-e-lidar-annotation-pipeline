@@ -1,0 +1,7 @@
+# ROS bag inventory (path + size)
+- _2023-06-27-16-15-39.bag | path: D:\BUDD-e database\data\raw\rosbags\_2023-06-27-16-15-39.bag | size: 1.30 GB
+- _2023-06-27-16-50-08.bag | path: D:\BUDD-e database\data\raw\rosbags\_2023-06-27-16-50-08.bag | size: 1.27 GB
+- _2023-06-27-16-58-44.bag | path: D:\BUDD-e database\data\raw\rosbags\_2023-06-27-16-58-44.bag | size: 1.03 GB
+- _2023-06-27-17-25-25.bag | path: D:\BUDD-e database\data\raw\rosbags\_2023-06-27-17-25-25.bag | size: 0.86 GB
+- _2023-06-27-17-35-38.bag | path: D:\BUDD-e database\data\raw\rosbags\_2023-06-27-17-35-38.bag | size: 0.08 GB
+- _2023-06-27-17-36-10.bag | path: D:\BUDD-e database\data\raw\rosbags\_2023-06-27-17-36-10.bag | size: 1.40 GB
