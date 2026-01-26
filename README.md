@@ -68,7 +68,7 @@ source .venv/bin/activate
 scripts/run_pipeline.sh \
   --bag data/raw/rosbags/_2023-06-27-16-15-39.bag \
   --topic /rslidar_points \
-  --model-config external/openpcdet/tools/cfgs/kitti_models/pointrcnn_iou_budde.yaml \
+  --model-config configs/pcdet/pointrcnn_iou_budde.yaml \
   --model-ckpt external/openpcdet/ckpts/pointrcnn_iou_kitti.pth
 ```
 
@@ -96,8 +96,8 @@ python3 scripts/utils/transform_bins_tf.py \
 python3 scripts/utils/transform_labels_tf.py \
   --bag data/raw/rosbags/_2023-06-27-16-50-08.bag \
   --frames-csv data/interim/2023-06-27-16-50-08/frames.csv \
-  --pred data/processed/2023-06-27-16-50-08/pointrcnn_iou/ped_tracks_pointrcnn_iou_interp_nomotion_2023-06-27-16-50-08.jsonl \
-  --out data/processed/2023-06-27-16-50-08/pointrcnn_iou/ped_tracks_pointrcnn_iou_interp_nomotion_map_2023-06-27-16-50-08.jsonl \
+  --pred data/processed/2023-06-27-16-50-08/pointrcnn_iou/ped_tracks_pointrcnn_iou_2023-06-27-16-50-08.jsonl \
+  --out data/processed/2023-06-27-16-50-08/pointrcnn_iou/ped_tracks_pointrcnn_iou_map_2023-06-27-16-50-08.jsonl \
   --source-frame rslidar \
   --target-frame map
 ```
@@ -133,17 +133,17 @@ scripts/upload_tracks.sh \
   --model-name pointrcnn_iou \
   --split-size 1500 \
   --dataset Mahi_j/budd-e \
-  --pcd-dir data/interim/2023-06-27-16-15-39_pcd \
-  --frames-csv data/interim/2023-06-27-16-15-39/frames.csv \
-  --pred data/processed/2023-06-27-16-15-39/pointrcnn_iou/ped_tracks_pointrcnn_iou_interp_nomotion_2023-06-27-16-15-39.jsonl \
-  --sample-name 2023-06-27-16-15-39_pointrcnn_iou
+  --pcd-dir data/interim/2023-06-27-16-15-39_map_pcd \
+  --frames-csv data/interim/2023-06-27-16-15-39_map/frames.csv \
+  --pred data/processed/2023-06-27-16-15-39/pointrcnn_iou/ped_tracks_pointrcnn_iou_map_2023-06-27-16-15-39.jsonl \
+  --sample-name 2023-06-27-16-15-39_pointrcnn_iou_map
 ```
 
 ## Key Outputs
 - `data/interim/<bag_id>/` — `.bin` frames and `frames.csv`
 - `data/interim/<bag_id>_pcd/` — `.pcd` sequence
 - `data/processed/<bag_id>/<model>/predictions_<model>_<bag_id>.jsonl`
-- `data/processed/<bag_id>/<model>/ped_tracks_<model>_interp_nomotion_<bag_id>.jsonl`
+- `data/processed/<bag_id>/<model>/ped_tracks_<model>_<bag_id>.jsonl`
 
 ## Report
 - `reports/technical_report.tex`

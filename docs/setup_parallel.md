@@ -67,7 +67,7 @@ source .venv/bin/activate
 scripts/run_pipeline.sh \
   --bag data/raw/rosbags/_2023-06-27-16-50-08.bag \
   --topic /rslidar_points \
-  --model-config external/openpcdet/tools/cfgs/kitti_models/pointrcnn_iou_budde.yaml \
+  --model-config configs/pcdet/pointrcnn_iou_budde.yaml \
   --model-ckpt external/openpcdet/ckpts/pointrcnn_iou_kitti.pth
 ```
 
@@ -94,8 +94,8 @@ python3 scripts/utils/transform_bins_tf.py \
 python3 scripts/utils/transform_labels_tf.py \
   --bag data/raw/rosbags/_2023-06-27-16-50-08.bag \
   --frames-csv data/interim/<bag_id>/frames.csv \
-  --pred data/processed/<bag_id>/<model>/ped_tracks_<model>_interp_nomotion_<bag_id>.jsonl \
-  --out data/processed/<bag_id>/<model>/ped_tracks_<model>_interp_nomotion_map_<bag_id>.jsonl \
+  --pred data/processed/<bag_id>/<model>/ped_tracks_<model>_<bag_id>.jsonl \
+  --out data/processed/<bag_id>/<model>/ped_tracks_<model>_map_<bag_id>.jsonl \
   --source-frame rslidar \
   --target-frame map
 ```

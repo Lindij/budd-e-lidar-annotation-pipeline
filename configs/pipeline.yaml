@@ -1,5 +1,5 @@
 topic: /rslidar_points
-model_config: external/openpcdet/tools/cfgs/kitti_models/pointrcnn_iou_budde.yaml
+model_config: configs/pcdet/pointrcnn_iou_budde.yaml
 model_ckpt: external/openpcdet/ckpts/pointrcnn_iou_kitti.pth
 track_enabled: true
 track_max_age: 30
