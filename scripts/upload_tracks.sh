@@ -72,7 +72,7 @@ fi
 
 if [[ "$config" == *.yaml || "$config" == *.yml ]]; then
   eval "$(
-    python3 - <<'PY'
+    python3 - "$config" "$bag_id" "$model_name" <<'PY'
 import sys
 from pathlib import Path
 
@@ -119,7 +119,6 @@ print(f'frames_csv=\"{frames_csv}\"')
 print(f'pred=\"{pred}\"')
 print(f'sample_prefix=\"{sample_prefix}\"')
 PY
-    "$config" "$bag_id" "$model_name"
   )"
 else
   # shellcheck source=/dev/null

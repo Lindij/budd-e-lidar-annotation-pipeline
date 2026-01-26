@@ -3,45 +3,18 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: scripts/setup_env.sh [--apply-openpcdet-patch]
+Usage:
+  scripts/setup_env.sh [--apply-openpcdet-patch] <command>
+
+Commands:
+  cuda       Install CUDA toolkit
+  ros        Install ROS Noetic
+  openpcdet  Install OpenPCDet into the venv
+  check      Verify torch + pcdet import
+  all        Run cuda, ros, openpcdet, check
 
 Options:
   --apply-openpcdet-patch   Apply optional dataset registry patch to OpenPCDet
-EOF
-}
-
-apply_openpcdet_patch=0
-
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --apply-openpcdet-patch) apply_openpcdet_patch=1; shift ;;
-    -h|--help) usage; exit 0 ;;
-    *) echo "Unknown arg: $1" >&2; usage; exit 1 ;;
-  esac
-done
-
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "$repo_root"
-
-if (( apply_openpcdet_patch )); then
-  if [[ -f "scripts/patches/openpcdet_optional_datasets.patch" ]]; then
-    git -C external/openpcdet apply --check "../scripts/patches/openpcdet_optional_datasets.patch" >/dev/null 2>&1 || true
-    git -C external/openpcdet apply "../scripts/patches/openpcdet_optional_datasets.patch" || true
-    echo "Applied OpenPCDet optional-datasets patch."
-  else
-    echo "Patch not found: scripts/patches/openpcdet_optional_datasets.patch" >&2
-    exit 1
-  fi
-fi
-
-usage() {
-  cat <<'EOF'
-Usage:
-  scripts/setup_env.sh cuda
-  scripts/setup_env.sh ros
-  scripts/setup_env.sh openpcdet
-  scripts/setup_env.sh check
-  scripts/setup_env.sh all
 EOF
 }
 
@@ -127,17 +100,43 @@ print("OpenPCDet environment OK.")
 PY
 }
 
-if [[ $# -lt 1 ]]; then
+apply_openpcdet_patch=0
+subcommand=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --apply-openpcdet-patch) apply_openpcdet_patch=1; shift ;;
+    -h|--help) usage; exit 0 ;;
+    cuda|ros|openpcdet|check|all) subcommand="$1"; shift ;;
+    *) echo "Unknown arg: $1" >&2; usage; exit 1 ;;
+  esac
+done
+
+if (( apply_openpcdet_patch )); then
+  patch_path="${repo_root}/scripts/patches/openpcdet_optional_datasets.patch"
+  if [[ -f "$patch_path" ]]; then
+    git -C "${repo_root}/external/openpcdet" apply --check "$patch_path" >/dev/null 2>&1 || true
+    git -C "${repo_root}/external/openpcdet" apply "$patch_path" || true
+    echo "Applied OpenPCDet optional-datasets patch."
+  else
+    echo "Patch not found: $patch_path" >&2
+    exit 1
+  fi
+fi
+
+if [[ -z "$subcommand" ]]; then
+  if (( apply_openpcdet_patch )); then
+    exit 0
+  fi
   usage
   exit 1
 fi
 
-case "$1" in
+case "$subcommand" in
   cuda) setup_cuda ;;
   ros) setup_ros ;;
   openpcdet) setup_openpcdet ;;
   check) check_openpcdet ;;
   all) setup_cuda; setup_ros; setup_openpcdet; check_openpcdet ;;
-  -h|--help) usage ;;
   *) usage; exit 1 ;;
 esac
