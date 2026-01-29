@@ -2,9 +2,14 @@
 
 LiDAR-only pipeline to extract point clouds from ROS1 bag files, run pretrained 3D detection, and upload pedestrian prelabels for review in Segments.ai. The output target is 3D pedestrian cuboids for indoor hospital data.
 
+## Quick Links
+- Report: `reports/report.tex`
+- Setup + run: `docs/setup.md`
+- Bag inventory: `docs/rosbag_inventory.txt`
+
 ## Current Status
 - ROS bag ingestion working (topic: `/rslidar_points`).
-- Inference tested with **PointRCNN-IoU (KITTI pretrained)** and **PointPillars**.
+- Inference validated with **PointRCNN-IoU (KITTI pretrained)** and **PointPillars**.
 - Prelabels uploaded to Segments.ai (pointcloud cuboid sequence).
 - Default tracking uses simple interpolation (no motion model).
 
@@ -76,6 +81,21 @@ scripts/run_pipeline.sh \
   --model-ckpt external/openpcdet/ckpts/pointrcnn_iou_kitti.pth
 ```
 
+## How to Run (3 steps)
+1) Activate the venv and ROS:
+```bash
+source /opt/ros/noetic/setup.bash
+source .venv/bin/activate
+```
+2) Run the pipeline:
+```bash
+scripts/run_pipeline.sh --bag <path_to_bag> --model-config <yaml> --model-ckpt <pth>
+```
+3) Upload (optional):
+```bash
+scripts/upload_tracks.sh --config configs/upload_tracks/default.yaml --bag-id <bag_id> --model-name pointrcnn_iou --split-size 1500 --dataset <owner/name>
+```
+
 ### Notes
 - ROS bags are not tracked in git.
 - Segments.ai uploads are typically split at 1500 frames for usability.
@@ -143,6 +163,11 @@ scripts/upload_tracks.sh \
 - `data/interim/<bag_id>_pcd/` — `.pcd` sequence
 - `data/processed/<bag_id>/<model>/predictions_<model>_<bag_id>.jsonl`
 - `data/processed/<bag_id>/<model>/ped_tracks_<model>_<bag_id>.jsonl`
+
+## Output Artifacts (summary)
+- `frames.csv`: timestamped frame index
+- `predictions_*.jsonl`: raw detector outputs
+- `ped_tracks_*.jsonl`: tracked pedestrian labels
 
 ## Reports
 - `reports/report.tex`
