@@ -4,10 +4,9 @@ LiDAR-only pipeline to extract point clouds from ROS1 bag files, run pretrained 
 
 ## Current Status
 - ROS bag ingestion working (topic: `/rslidar_points`).
-- OpenPCDet installed and CUDA-enabled.
 - Inference tested with **PointRCNN-IoU (KITTI pretrained)** and **PointPillars**.
 - Prelabels uploaded to Segments.ai (pointcloud cuboid sequence).
-- Default prelabeling uses simple interpolation (no motion/static filtering).
+- Default tracking uses simple interpolation (no motion model).
 
 ## Repository Layout
 ```
@@ -51,6 +50,7 @@ source .venv/bin/activate
 python -m pip install --upgrade pip setuptools wheel
 ```
 For setup and run instructions, see `docs/setup.md`.
+For the ROS bag list, see `docs/rosbag_inventory.txt`.
 
 ### OpenPCDet patch (optional datasets)
 OpenPCDet may import optional datasets (e.g., Argo2) that are not installed. Apply this patch to avoid
@@ -66,8 +66,7 @@ scripts/setup_models.sh --pointrcnn-iou
 ```
 
 ## End-to-End Pipeline (CLI)
-The single supported entrypoint is `scripts/run_pipeline.sh` (it wraps the Python pipeline and adds
-static filtering, tracking, upload, and map-frame transforms).
+The single supported entrypoint is `scripts/run_pipeline.sh` (tracking, upload, and optional map-frame transforms).
 ```bash
 source .venv/bin/activate
 scripts/run_pipeline.sh \
@@ -79,8 +78,8 @@ scripts/run_pipeline.sh \
 
 ### Notes
 - ROS bags are not tracked in git.
-- Segments.ai has a frame limit per sequence (1500). Use `scripts/upload_tracks.sh --split-size 1500`.
-- Default tracking uses simple interpolation (no motion model, no static filtering).
+- Segments.ai uploads are typically split at 1500 frames for usability.
+- Default tracking uses simple interpolation (no motion model).
 - Map-frame transforms are optional and controlled by `--map-frame/--no-map-frame`.
 
 ### TF-based frame stabilization (optional)
@@ -118,11 +117,6 @@ Then run `src/export/bin_to_pcd_sequence.py` on the `_map` directory and upload 
 
 ## Model Catalogue
 See `docs/model_catalogue.md` for validated models and candidates.
-
-### Suggested Next Models
-- CenterPoint (KITTI pretrained)
-- PV-RCNN (KITTI pretrained)
-- Indoor-focused models (if available)
 
 ## Segments.ai Upload (split samples)
 1) Put API key in `.env`:

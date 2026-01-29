@@ -12,4 +12,4 @@
 
 ## Documentation
 - [x] Update `README.md` to match current layout and commands.
-- [x] Add parallel setup doc (`docs/setup_parallel.md`).
+- [x] Consolidate setup doc (`docs/setup.md`).
