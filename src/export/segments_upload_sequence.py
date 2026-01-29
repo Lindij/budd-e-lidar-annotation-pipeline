@@ -66,11 +66,13 @@ def upload_asset_with_retry(client: SegmentsClient, pcd_path: Path, max_retries:
                 asset = client.upload_asset(f, filename=pcd_path.name)
             return asset.url
         except Exception as exc:
-            msg = str(exc)
+            msg = " ".join(
+                [str(exc), str(getattr(exc, "message", "")), repr(getattr(exc, "args", ""))]
+            ).lower()
             if "throttled" in msg or "429" in msg:
                 if attempt == max_retries:
                     raise
-                time.sleep(1)
+                time.sleep(2 * attempt)
                 continue
             raise
 
@@ -144,11 +146,27 @@ def main() -> None:
             if (idx + 1) % 50 == 0 or idx == len(pcd_files) - 1:
                 print(f"Uploaded {idx + 1}/{len(pcd_files)}")
 
-        sample = client.add_sample(
-            dataset_identifier=args.dataset,
-            name=args.sample_name,
-            attributes={"frames": frames},
-        )
+        sample = None
+        for attempt in range(1, 6):
+            try:
+                sample = client.add_sample(
+                    dataset_identifier=args.dataset,
+                    name=args.sample_name,
+                    attributes={"frames": frames},
+                )
+                break
+            except Exception as exc:
+                msg = " ".join(
+                    [str(exc), str(getattr(exc, "message", "")), repr(getattr(exc, "args", ""))]
+                ).lower()
+                if "throttled" in msg or "429" in msg:
+                    if attempt == 5:
+                        raise
+                    time.sleep(2 * attempt)
+                    continue
+                raise
+        if sample is None:
+            raise SystemExit("Failed to create sample after retries.")
         print(f"Created sample: {sample.uuid}")
 
     # Ensure labelset exists
