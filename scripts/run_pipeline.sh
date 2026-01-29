@@ -289,7 +289,7 @@ if (( map_frame )); then
   fi
 
   echo "+ map-frame transform (bins + labels)"
-  bash -lc "source /opt/ros/noetic/setup.bash; python3 scripts/utils/transform_bins_tf.py \
+  bash -lc "source /opt/ros/noetic/setup.bash; python3 scripts/transform_bins_tf.py \
     --bag \"$bag\" \
     --frames-csv \"${pcdet_dir}/frames.csv\" \
     --in-dir \"${pcdet_dir}\" \
@@ -299,7 +299,7 @@ if (( map_frame )); then
 
   cp -f "${pcdet_dir}/frames.csv" "${map_dir}/frames.csv"
 
-  bash -lc "source /opt/ros/noetic/setup.bash; python3 scripts/utils/transform_labels_tf.py \
+  bash -lc "source /opt/ros/noetic/setup.bash; python3 scripts/transform_labels_tf.py \
     --bag \"$bag\" \
     --frames-csv \"${pcdet_dir}/frames.csv\" \
     --pred \"$pred_path\" \
