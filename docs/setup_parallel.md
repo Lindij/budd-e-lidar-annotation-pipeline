@@ -83,7 +83,7 @@ If TF is recorded in the bag (`/tf`, `/tf_static`), the pipeline transforms fram
 Disable with `--no-map-frame` in `scripts/run_pipeline.sh`.
 ```bash
 source /opt/ros/noetic/setup.bash
-python3 scripts/utils/transform_bins_tf.py \
+python3 scripts/transform_bins_tf.py \
   --bag data/raw/rosbags/_2023-06-27-16-50-08.bag \
   --frames-csv data/interim/<bag_id>/frames.csv \
   --in-dir data/interim/<bag_id> \
@@ -91,7 +91,7 @@ python3 scripts/utils/transform_bins_tf.py \
   --source-frame rslidar \
   --target-frame map
 
-python3 scripts/utils/transform_labels_tf.py \
+python3 scripts/transform_labels_tf.py \
   --bag data/raw/rosbags/_2023-06-27-16-50-08.bag \
   --frames-csv data/interim/<bag_id>/frames.csv \
   --pred data/processed/<bag_id>/<model>/ped_tracks_<model>_<bag_id>.jsonl \

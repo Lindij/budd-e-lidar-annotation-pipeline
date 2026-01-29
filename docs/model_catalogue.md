@@ -5,7 +5,7 @@ This catalogue focuses on models that are practical for indoor LiDAR pedestrian 
 ## Recommended (start here)
 
 ### PointRCNN (IoU)
-- Config: `external/openpcdet/tools/cfgs/kitti_models/pointrcnn_iou.yaml`
+- Config: `configs/pcdet/pointrcnn_iou_budde.yaml` (customized for lower point counts)
 - Checkpoint: `external/openpcdet/ckpts/pointrcnn_iou_kitti.pth`
 - Notes: Stronger pedestrian boxes than PointPillars. Slower but higher quality. Good baseline for indoor pedestrian prelabels.
 

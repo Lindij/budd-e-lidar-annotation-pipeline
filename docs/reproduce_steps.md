@@ -68,17 +68,17 @@ Inference:
   --ckpt external/openpcdet/ckpts/pointpillar_kitti.pth \
   --data-path data/interim/pcdet_demo \
   --ext .bin \
-  --out data/labels/pcdet_demo/predictions.jsonl
+  --out data/processed/pcdet_demo/pointpillars/predictions_pointpillars_pcdet_demo.jsonl
 ```
 
 Filter pedestrians:
 ```
 ./.venv/bin/python src/export/export_pedestrians.py \
-  --pred data/labels/pcdet_demo/predictions.jsonl \
+  --pred data/processed/pcdet_demo/pointpillars/predictions_pointpillars_pcdet_demo.jsonl \
   --frames data/interim/pcdet_demo/frames.csv \
   --score 0.3 \
-  --out-jsonl data/labels/pcdet_demo/pedestrians.jsonl \
-  --out-csv data/labels/pcdet_demo/pedestrians.csv \
+  --out-jsonl data/processed/pcdet_demo/pointpillars/pedestrians_pointpillars_pcdet_demo.jsonl \
+  --out-csv data/processed/pcdet_demo/pointpillars/pedestrians_pointpillars_pcdet_demo.csv \
   --label Pedestrian
 ```
 
@@ -97,7 +97,7 @@ PointRCNN requires 16384 points by default; our frames have fewer.
 We cloned the config and reduced `NUM_POINTS['test']` to 10000.
 
 Created file:
-- `external/openpcdet/tools/cfgs/kitti_models/pointrcnn_iou_budde.yaml`
+- `configs/pcdet/pointrcnn_iou_budde.yaml`
 
 (Contents are identical to `pointrcnn_iou.yaml` except `NUM_POINTS: test=10000`.)
 
@@ -105,21 +105,21 @@ Created file:
 Initial inference:
 ```
 ./.venv/bin/python src/inference/pcdet_infer_dir.py \
-  --cfg-file external/openpcdet/tools/cfgs/kitti_models/pointrcnn_iou_budde.yaml \
+  --cfg-file configs/pcdet/pointrcnn_iou_budde.yaml \
   --ckpt external/openpcdet/ckpts/pointrcnn_iou_kitti.pth \
   --data-path data/interim/pcdet_demo \
   --ext .bin \
-  --out data/labels/pcdet_pointrcnn_iou/predictions.jsonl
+  --out data/processed/pcdet_demo/pointrcnn_iou/predictions_pointrcnn_iou_pcdet_demo.jsonl
 ```
 
 Resume inference from a specific frame index (if needed):
 ```
 ./.venv/bin/python src/inference/pcdet_infer_dir.py \
-  --cfg-file external/openpcdet/tools/cfgs/kitti_models/pointrcnn_iou_budde.yaml \
+  --cfg-file configs/pcdet/pointrcnn_iou_budde.yaml \
   --ckpt external/openpcdet/ckpts/pointrcnn_iou_kitti.pth \
   --data-path data/interim/pcdet_demo \
   --ext .bin \
-  --out data/labels/pcdet_pointrcnn_iou/predictions.jsonl \
+  --out data/processed/pcdet_demo/pointrcnn_iou/predictions_pointrcnn_iou_pcdet_demo.jsonl \
   --start-index <N>
 ```
 
@@ -128,11 +128,11 @@ Create datasets (separate per model so labelsets are clean).
 
 ### 7.1 Create datasets
 ```
-./.venv/bin/python tools/segments_create_dataset.py \
+./.venv/bin/python src/tools/segments/segments_create_dataset.py \
   --name budd-e_pointpillar \
   --description "BUDD-e PointPillars prelabels"
 
-./.venv/bin/python tools/segments_create_dataset.py \
+./.venv/bin/python src/tools/segments/segments_create_dataset.py \
   --name budd-e_pointrcnn_iou \
   --description "BUDD-e PointRCNN-IoU prelabels"
 ```
@@ -149,7 +149,7 @@ We split into 5 samples of 300 frames each.
   --dataset Mahi_j/budd-e_pointpillar \
   --pcd-dir data/interim/pcdet_demo_pcd \
   --frames-csv data/interim/pcdet_demo/frames.csv \
-  --pred data/labels/pcdet_demo/pedestrians.jsonl \
+  --pred data/processed/pcdet_demo/pointpillars/pedestrians_pointpillars_pcdet_demo.jsonl \
   --sample-name budd-e_ped_0000_0299 \
   --labelset prelabels \
   --max-frames 300 \
@@ -160,7 +160,7 @@ We split into 5 samples of 300 frames each.
   --dataset Mahi_j/budd-e_pointpillar \
   --pcd-dir data/interim/pcdet_demo_pcd \
   --frames-csv data/interim/pcdet_demo/frames.csv \
-  --pred data/labels/pcdet_demo/pedestrians.jsonl \
+  --pred data/processed/pcdet_demo/pointpillars/pedestrians_pointpillars_pcdet_demo.jsonl \
   --sample-name budd-e_ped_0300_0599 \
   --labelset prelabels \
   --max-frames 300 \
@@ -172,7 +172,7 @@ We split into 5 samples of 300 frames each.
   --dataset Mahi_j/budd-e_pointpillar \
   --pcd-dir data/interim/pcdet_demo_pcd \
   --frames-csv data/interim/pcdet_demo/frames.csv \
-  --pred data/labels/pcdet_demo/pedestrians.jsonl \
+  --pred data/processed/pcdet_demo/pointpillars/pedestrians_pointpillars_pcdet_demo.jsonl \
   --sample-name budd-e_ped_0600_0899 \
   --labelset prelabels \
   --max-frames 300 \
@@ -183,7 +183,7 @@ We split into 5 samples of 300 frames each.
   --dataset Mahi_j/budd-e_pointpillar \
   --pcd-dir data/interim/pcdet_demo_pcd \
   --frames-csv data/interim/pcdet_demo/frames.csv \
-  --pred data/labels/pcdet_demo/pedestrians.jsonl \
+  --pred data/processed/pcdet_demo/pointpillars/pedestrians_pointpillars_pcdet_demo.jsonl \
   --sample-name budd-e_ped_0900_1199 \
   --labelset prelabels \
   --max-frames 300 \
@@ -194,7 +194,7 @@ We split into 5 samples of 300 frames each.
   --dataset Mahi_j/budd-e_pointpillar \
   --pcd-dir data/interim/pcdet_demo_pcd \
   --frames-csv data/interim/pcdet_demo/frames.csv \
-  --pred data/labels/pcdet_demo/pedestrians.jsonl \
+  --pred data/processed/pcdet_demo/pointpillars/pedestrians_pointpillars_pcdet_demo.jsonl \
   --sample-name budd-e_ped_1200_1499 \
   --labelset prelabels \
   --max-frames 300 \
@@ -210,7 +210,7 @@ We split into 50-frame chunks for usability:
   --dataset Mahi_j/budd-e_pointrcnn_iou \
   --pcd-dir data/interim/pcdet_demo_pcd \
   --frames-csv data/interim/pcdet_demo/frames.csv \
-  --pred data/labels/pcdet_pointrcnn_iou/predictions.jsonl \
+  --pred data/processed/pcdet_demo/pointrcnn_iou/predictions_pointrcnn_iou_pcdet_demo.jsonl \
   --sample-name budd-e_pointrcnn_iou_0000_0049 \
   --labelset prelabels \
   --max-frames 50 \
@@ -221,7 +221,7 @@ We split into 50-frame chunks for usability:
   --dataset Mahi_j/budd-e_pointrcnn_iou \
   --pcd-dir data/interim/pcdet_demo_pcd \
   --frames-csv data/interim/pcdet_demo/frames.csv \
-  --pred data/labels/pcdet_pointrcnn_iou/predictions.jsonl \
+  --pred data/processed/pcdet_demo/pointrcnn_iou/predictions_pointrcnn_iou_pcdet_demo.jsonl \
   --sample-name budd-e_pointrcnn_iou_0050_0099 \
   --labelset prelabels \
   --max-frames 50 \
@@ -232,7 +232,7 @@ We split into 50-frame chunks for usability:
   --dataset Mahi_j/budd-e_pointrcnn_iou \
   --pcd-dir data/interim/pcdet_demo_pcd \
   --frames-csv data/interim/pcdet_demo/frames.csv \
-  --pred data/labels/pcdet_pointrcnn_iou/predictions.jsonl \
+  --pred data/processed/pcdet_demo/pointrcnn_iou/predictions_pointrcnn_iou_pcdet_demo.jsonl \
   --sample-name budd-e_pointrcnn_iou_0100_0149 \
   --labelset prelabels \
   --max-frames 50 \
@@ -243,7 +243,7 @@ We split into 50-frame chunks for usability:
   --dataset Mahi_j/budd-e_pointrcnn_iou \
   --pcd-dir data/interim/pcdet_demo_pcd \
   --frames-csv data/interim/pcdet_demo/frames.csv \
-  --pred data/labels/pcdet_pointrcnn_iou/predictions.jsonl \
+  --pred data/processed/pcdet_demo/pointrcnn_iou/predictions_pointrcnn_iou_pcdet_demo.jsonl \
   --sample-name budd-e_pointrcnn_iou_0150_0199 \
   --labelset prelabels \
   --max-frames 50 \
@@ -254,7 +254,7 @@ We split into 50-frame chunks for usability:
   --dataset Mahi_j/budd-e_pointrcnn_iou \
   --pcd-dir data/interim/pcdet_demo_pcd \
   --frames-csv data/interim/pcdet_demo/frames.csv \
-  --pred data/labels/pcdet_pointrcnn_iou/predictions.jsonl \
+  --pred data/processed/pcdet_demo/pointrcnn_iou/predictions_pointrcnn_iou_pcdet_demo.jsonl \
   --sample-name budd-e_pointrcnn_iou_0200_0249 \
   --labelset prelabels \
   --max-frames 50 \
@@ -265,7 +265,7 @@ We split into 50-frame chunks for usability:
   --dataset Mahi_j/budd-e_pointrcnn_iou \
   --pcd-dir data/interim/pcdet_demo_pcd \
   --frames-csv data/interim/pcdet_demo/frames.csv \
-  --pred data/labels/pcdet_pointrcnn_iou/predictions.jsonl \
+  --pred data/processed/pcdet_demo/pointrcnn_iou/predictions_pointrcnn_iou_pcdet_demo.jsonl \
   --sample-name budd-e_pointrcnn_iou_0250_0299 \
   --labelset prelabels \
   --max-frames 50 \
@@ -276,7 +276,7 @@ We split into 50-frame chunks for usability:
   --dataset Mahi_j/budd-e_pointrcnn_iou \
   --pcd-dir data/interim/pcdet_demo_pcd \
   --frames-csv data/interim/pcdet_demo/frames.csv \
-  --pred data/labels/pcdet_pointrcnn_iou/predictions.jsonl \
+  --pred data/processed/pcdet_demo/pointrcnn_iou/predictions_pointrcnn_iou_pcdet_demo.jsonl \
   --sample-name budd-e_pointrcnn_iou_0300_0323 \
   --labelset prelabels \
   --max-frames 24 \

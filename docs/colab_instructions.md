@@ -89,7 +89,7 @@ Example using PointRCNN-IoU:
 %cd /content/budd-e/repo
 
 !python src/inference/pcdet_infer_dir.py \
-  --cfg-file external/openpcdet/tools/cfgs/kitti_models/pointrcnn_iou_budde.yaml \
+  --cfg-file configs/pcdet/pointrcnn_iou_budde.yaml \
   --ckpt external/openpcdet/ckpts/pointrcnn_iou_kitti.pth \
   --data-path /content/budd-e/pcdet_demo \
   --ext .bin \
@@ -101,7 +101,7 @@ Example using PointRCNN-IoU:
 
 Static filtering (builds a static voxel map, removes static points):
 ```bash
-!python tools/filter_static_points.py \
+!python src/tools/filtering/filter_static_points.py \
   --in-dir /content/budd-e/pcdet_demo \
   --out-dir /content/budd-e/pcdet_demo_moving \
   --voxel-size 0.2 \
@@ -115,7 +115,7 @@ Static filtering (builds a static voxel map, removes static points):
 Then run inference on filtered frames:
 ```bash
 !python src/inference/pcdet_infer_dir.py \
-  --cfg-file external/openpcdet/tools/cfgs/kitti_models/pointrcnn_iou_budde.yaml \
+  --cfg-file configs/pcdet/pointrcnn_iou_budde.yaml \
   --ckpt external/openpcdet/ckpts/pointrcnn_iou_kitti.pth \
   --data-path /content/budd-e/pcdet_demo_moving \
   --ext .bin \
@@ -126,7 +126,7 @@ Then run inference on filtered frames:
 ## 8) Run tracking + interpolation
 
 ```bash
-!python tools/track_pedestrians.py \
+!python src/tools/tracking/track_pedestrians.py \
   --pred /content/budd-e/predictions.jsonl \
   --frames /content/budd-e/frames.csv \
   --label Pedestrian \
@@ -142,7 +142,7 @@ Then run inference on filtered frames:
 
 If using the static-filtered predictions:
 ```bash
-!python tools/track_pedestrians.py \
+!python src/tools/tracking/track_pedestrians.py \
   --pred /content/budd-e/predictions_moving.jsonl \
   --frames /content/budd-e/frames.csv \
   --label Pedestrian \
@@ -159,17 +159,17 @@ If using the static-filtered predictions:
 ## 9) Copy outputs back to Drive
 
 ```bash
-!mkdir -p "/content/drive/MyDrive/BUDD-e database/data/labels/pcdet_pointrcnn_iou"
-!cp /content/budd-e/predictions.jsonl "/content/drive/MyDrive/BUDD-e database/data/labels/pcdet_pointrcnn_iou/"
-!cp /content/budd-e/ped_tracks_interp.jsonl "/content/drive/MyDrive/BUDD-e database/data/labels/pcdet_pointrcnn_iou/"
-!cp /content/budd-e/ped_tracks_interp.csv "/content/drive/MyDrive/BUDD-e database/data/labels/pcdet_pointrcnn_iou/"
+!mkdir -p "/content/drive/MyDrive/BUDD-e database/data/processed/pcdet_demo/pointrcnn_iou"
+!cp /content/budd-e/predictions.jsonl "/content/drive/MyDrive/BUDD-e database/data/processed/pcdet_demo/pointrcnn_iou/predictions_pointrcnn_iou_pcdet_demo.jsonl"
+!cp /content/budd-e/ped_tracks_interp.jsonl "/content/drive/MyDrive/BUDD-e database/data/processed/pcdet_demo/pointrcnn_iou/ped_tracks_pointrcnn_iou_pcdet_demo.jsonl"
+!cp /content/budd-e/ped_tracks_interp.csv "/content/drive/MyDrive/BUDD-e database/data/processed/pcdet_demo/pointrcnn_iou/ped_tracks_pointrcnn_iou_pcdet_demo.csv"
 ```
 
 For static filtered output:
 ```bash
-!cp /content/budd-e/predictions_moving.jsonl "/content/drive/MyDrive/BUDD-e database/data/labels/pcdet_pointrcnn_iou/"
-!cp /content/budd-e/ped_tracks_interp_static.jsonl "/content/drive/MyDrive/BUDD-e database/data/labels/pcdet_pointrcnn_iou/"
-!cp /content/budd-e/ped_tracks_interp_static.csv "/content/drive/MyDrive/BUDD-e database/data/labels/pcdet_pointrcnn_iou/"
+!cp /content/budd-e/predictions_moving.jsonl "/content/drive/MyDrive/BUDD-e database/data/processed/pcdet_demo/pointrcnn_iou/predictions_moving_pointrcnn_iou_pcdet_demo.jsonl"
+!cp /content/budd-e/ped_tracks_interp_static.jsonl "/content/drive/MyDrive/BUDD-e database/data/processed/pcdet_demo/pointrcnn_iou/ped_tracks_interp_static_pointrcnn_iou_pcdet_demo.jsonl"
+!cp /content/budd-e/ped_tracks_interp_static.csv "/content/drive/MyDrive/BUDD-e database/data/processed/pcdet_demo/pointrcnn_iou/ped_tracks_interp_static_pointrcnn_iou_pcdet_demo.csv"
 !cp /content/budd-e/static_map.npz "/content/drive/MyDrive/BUDD-e database/data/interim/"
 ```
 
