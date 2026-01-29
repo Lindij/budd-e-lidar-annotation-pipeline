@@ -50,7 +50,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip setuptools wheel
 ```
-For multi-machine setup, see `docs/setup_parallel.md`.
+For setup and run instructions, see `docs/setup.md`.
 
 ### OpenPCDet patch (optional datasets)
 OpenPCDet may import optional datasets (e.g., Argo2) that are not installed. Apply this patch to avoid
@@ -117,7 +117,7 @@ Then run `src/export/bin_to_pcd_sequence.py` on the `_map` directory and upload 
   Checkpoint: `external/openpcdet/ckpts/pointpillar_kitti.pth`
 
 ## Model Catalogue
-See `docs/model_catalogue.md` for recommended OpenPCDet models to test in this setup.
+See `docs/model_catalogue.md` for validated models and candidates.
 
 ### Suggested Next Models
 - CenterPoint (KITTI pretrained)

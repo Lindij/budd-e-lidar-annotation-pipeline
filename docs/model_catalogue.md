@@ -1,25 +1,25 @@
 # Model Catalogue (OpenPCDet, KITTI pretrained)
 
-This catalogue focuses on models that are practical for indoor LiDAR pedestrian prelabels using OpenPCDet. All models below are KITTI-pretrained and run in `external/openpcdet`.
+This catalogue summarizes validated baselines and candidate models for future evaluation. All models below are KITTI-pretrained and run in `external/openpcdet`.
 
-## Recommended (start here)
+## Validated baselines (used in this repo)
 
 ### PointRCNN (IoU)
 - Config: `configs/pcdet/pointrcnn_iou_budde.yaml` (customized for lower point counts)
 - Checkpoint: `external/openpcdet/ckpts/pointrcnn_iou_kitti.pth`
-- Notes: Stronger pedestrian boxes than PointPillars. Slower but higher quality. Good baseline for indoor pedestrian prelabels.
+- Notes: Stronger pedestrian boxes than PointPillars; slower but higher quality.
 
-### PV-RCNN
+### PV-RCNN (candidate)
 - Config: `external/openpcdet/tools/cfgs/kitti_models/pv_rcnn.yaml`
 - Checkpoint: `external/openpcdet/ckpts/pv_rcnn_8369.pth` (KITTI pretrained)
 - Notes: Often improves recall for pedestrians. Slower than PointRCNN but can be more stable.
 
-### CenterPoint (KITTI)
+### CenterPoint (KITTI, candidate)
 - Config: `external/openpcdet/tools/cfgs/kitti_models/centerpoint.yaml` (or closest available)
 - Checkpoint: `external/openpcdet/ckpts/centerpoint_kitti.pth` (if present)
 - Notes: Fast and typically strong. Worth testing if the config exists in your OpenPCDet version.
 
-## Secondary options (good to compare)
+## Secondary options (candidates)
 
 ### SECOND
 - Config: `external/openpcdet/tools/cfgs/kitti_models/second.yaml`

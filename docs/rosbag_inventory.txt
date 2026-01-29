@@ -1,7 +1,19 @@
-# ROS bag inventory (path + size)
-- _2023-06-27-16-15-39.bag | path: D:\BUDD-e database\data\raw\rosbags\_2023-06-27-16-15-39.bag | size: 1.30 GB
-- _2023-06-27-16-50-08.bag | path: D:\BUDD-e database\data\raw\rosbags\_2023-06-27-16-50-08.bag | size: 1.27 GB
-- _2023-06-27-16-58-44.bag | path: D:\BUDD-e database\data\raw\rosbags\_2023-06-27-16-58-44.bag | size: 1.03 GB
-- _2023-06-27-17-25-25.bag | path: D:\BUDD-e database\data\raw\rosbags\_2023-06-27-17-25-25.bag | size: 0.86 GB
-- _2023-06-27-17-35-38.bag | path: D:\BUDD-e database\data\raw\rosbags\_2023-06-27-17-35-38.bag | size: 0.08 GB
-- _2023-06-27-17-36-10.bag | path: D:\BUDD-e database\data\raw\rosbags\_2023-06-27-17-36-10.bag | size: 1.40 GB
+_2023-06-27-11-16-13.bag
+_2023-06-27-11-28-36.bag
+_2023-06-27-16-15-39.bag
+_2023-06-27-16-18-35.bag
+_2023-06-27-16-41-53.bag
+_2023-06-27-16-50-08.bag
+_2023-06-27-16-52-18.bag
+_2023-06-27-16-58-44.bag
+_2023-06-27-17-06-06.bag
+_2023-06-27-17-11-55.bag
+_2023-06-27-17-15-01.bag
+_2023-06-27-17-25-25.bag
+_2023-06-27-17-27-07.bag
+_2023-06-27-17-32-58.bag
+_2023-06-27-17-35-38.bag
+_2023-06-27-17-36-10.bag
+_2023-06-27-17-39-15.bag
+_2023-06-27-17-53-39.bag
+_2023-06-27-17-59-25.bag
