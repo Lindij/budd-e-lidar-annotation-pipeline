@@ -1,6 +1,6 @@
 # BUDD-e LiDAR Pedestrian Annotation Pipeline
 
-LiDAR-only pipeline to extract point clouds from ROS1 bag files, run pretrained 3D detection, and upload pedestrian prelabels for review in Segments.ai. The output target is 3D pedestrian cuboids for indoor hospital data.
+LiDAR-only pipeline to extract point clouds from ROS1 bag files, run pretrained 3D detection, and upload pedestrian prelabels for review in Segments.ai. The output target is 3D pedestrian cuboids for indoor hospital environment.
 
 ## Quick Links
 - Report: `reports/report.tex`
@@ -171,3 +171,6 @@ scripts/upload_tracks.sh \
 
 ## Reports
 - `reports/report.tex`
+
+## Future Development
+- Add a script to merge split Segments.ai samples back into one per rosbag.
