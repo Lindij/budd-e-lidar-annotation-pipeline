@@ -1,0 +1,199 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{xcolor}
+
+\geometry{margin=1in}
+
+\IfFileExists{polimi-report-style.sty}{\usepackage{polimi-report-style}}{}
+\newcommand{\imgbox}[3]{%
+  \begingroup
+  \setlength{\fboxrule}{0.1pt}%
+  \setlength{\fboxsep}{2pt}%
+  \IfFileExists{#1}{\fbox{\includegraphics[width=#2]{#1}}}{\fbox{\parbox{#2}{#3}}}%
+  \endgroup
+}
+
+\title{LiDAR Pedestrian Prelabeling Pipeline for the Budd-e Assistive Robot}
+\author{Mahdieh Jalali}
+\date{January 28, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This report presents a concise overview of a LiDAR-only pipeline that converts ROS1 bag recordings from the Budd-e assistive mobile robot in a hospital environment into 3D pedestrian prelabels for review on Segments.ai. The system focuses on clean, reproducible data preparation for indoor scenes where standard outdoor-pretrained detectors perform poorly. The pipeline covers ingestion, preprocessing, model inference, pedestrian filtering, temporal tracking, optional map-frame stabilization using TF, and upload to a pointcloud-cuboid sequence labeling workflow. The repository structure enables new contributors to reproduce or extend the dataset preparation process.
+\end{abstract}
+
+\section{Context and Objectives}
+Indoor hospital environments present complex geometry, clutter, and pedestrian behavior. The dataset consists of multiple ROS1 bag recordings (20 bags in total), each containing LiDAR point clouds from the Budd-e robot. The goal is to generate temporally consistent 3D pedestrian cuboids that accelerate human annotation, while maintaining a transparent pipeline that can be rerun as the dataset grows.
+
+The objectives are to:
+\begin{itemize}
+\item Convert ROS1 \texttt{sensor\_msgs/PointCloud2} messages into OpenPCDet-compatible frames.
+\item Produce pedestrian prelabels using pretrained 3D detectors.
+\item Filter and export predictions into annotation-friendly JSONL/CSV formats.
+\item Track detections over time to improve label continuity.
+\item Upload sequences to Segments.ai with robust metadata and consistent naming.
+\item Optionally stabilize frames and labels in a global map frame when TF is available.
+\end{itemize}
+
+\section{Data and Pipeline Overview}
+\subsection{Source Data}
+The raw input is ROS1 bag data with LiDAR point clouds on \texttt{/rslidar\_points}. A single bag may contain thousands of frames (e.g., 2,560 frames over about two minutes), but the dataset spans many bags recorded across different runs. The pipeline is designed to process bags independently and generate consistent artifacts.
+
+\subsection{Pipeline Stages}
+The pipeline is modular and staged to support partial reruns and debugging:
+\begin{enumerate}
+\item \textbf{Ingestion:} extract point clouds from ROS1 bags into \texttt{.bin} frames with a \texttt{frames.csv} index.
+\item \textbf{Inference:} run OpenPCDet on the frame sequence using KITTI-pretrained models. \cite{kitti2012,openpcdet2020}
+\item \textbf{Filtering:} select pedestrian detections by class and score.
+\item \textbf{Tracking:} associate detections over time; interpolate short gaps.
+\item \textbf{Map-frame stabilization (optional):} transform frames and labels using TF to a fixed map frame.
+\item \textbf{Upload:} package and upload sequences to Segments.ai.
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\imgbox{images/pipeline_overview.png}{0.5\textwidth}{Pipeline overview figure placeholder}
+\caption{End-to-end pipeline from ROS bag to Segments.ai prelabels.}
+\label{fig:pipeline_overview}
+\end{figure}
+
+\section{Implementation Summary}
+\subsection{Repository Layout}
+Key directories are organized for reproducibility:
+\begin{table}[H]
+\centering
+\caption{Key paths used in the pipeline}
+\label{tab:data_layout}
+\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.45\textwidth} X}
+\toprule
+Path & Description \\
+\midrule
+\texttt{data/raw/rosbags} & Input ROS1 bag files (not tracked) \\
+\texttt{data/interim/\textless bag\_id\textgreater/} & Extracted \texttt{.bin} frames + \texttt{frames.csv} \\
+\texttt{data/interim/\textless bag\_id\textgreater\_pcd/} & PCD sequence for Segments.ai upload \\
+\texttt{data/processed/\textless bag\_id\textgreater/\textless model\textgreater/} & Predictions and pedestrian tracks \\
+\texttt{configs/pcdet/} & Custom OpenPCDet configs \\
+\texttt{scripts/} & Main execution and upload entry points \\
+\bottomrule
+\end{tabularx}
+\normalsize
+\end{table}
+
+\subsection{Core Modules}
+\begin{table}[H]
+\centering
+\caption{Core modules and responsibilities}
+\label{tab:modules}
+\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.52\textwidth} X}
+\toprule
+Module & Responsibility \\
+\midrule
+\texttt{src/ingest/rosbag\_to\_pcdet.py} & ROS1 PointCloud2 to \texttt{.bin} frames \\
+\texttt{src/inference/pcdet\_infer\_dir.py} & Run OpenPCDet inference \\
+\texttt{src/export/export\_pedestrians.py} & Filter and export pedestrian labels \\
+\texttt{tools/track\_pedestrians.py} & Track association and interpolation \\
+\texttt{scripts/transform\_bins\_tf.py} & Optional map-frame point cloud transform \\
+\texttt{scripts/transform\_labels\_tf.py} & Optional map-frame label transform \\
+\texttt{src/export/segments\_upload\_sequence.py} & Upload sequences to Segments.ai \\
+\bottomrule
+\end{tabularx}
+\normalsize
+\end{table}
+
+\subsection{Map-Frame Stabilization (TF)}
+When the bag provides \texttt{/tf} and \texttt{/tf\_static}, frames and predicted labels can be transformed to a fixed map frame. This stabilizes static structures (e.g., walls) and improves the interpretability of sequences during annotation review. The map-frame transform is optional and can be toggled in the pipeline scripts.
+
+\begin{figure}[H]
+\centering
+\makebox[\textwidth][c]{%
+  \imgbox{images/map_frame_placeholder.png}{1.20\textwidth}{Map-frame stabilization placeholder}%
+}
+\caption{Optional map-frame stabilization using TF transforms.}
+\label{fig:map_frame}
+\end{figure}
+
+\section{Models and Evaluation}
+Two KITTI-pretrained detectors were evaluated as baselines for indoor performance: \cite{kitti2012}
+\begin{itemize}
+\item \textbf{PointPillars:} fast inference but limited pedestrian quality indoors. \cite{pointpillars2019}
+\item \textbf{PointRCNN-IoU:} improved box quality and recall, with higher runtime cost. \cite{pointrcnn2019}
+\end{itemize}
+
+Qualitative inspection on hospital scenes showed that domain mismatch (outdoor KITTI vs. indoor hospital data) reduces performance, motivating careful score thresholds and human review. The system therefore emphasizes prelabels as accelerators, not final ground truth.
+
+\begin{figure}[H]
+\centering
+\imgbox{images/segments_ui_placeholder.png}{0.95\textwidth}{Segments.ai interface placeholder}
+\caption{Example Segments.ai pointcloud-cuboid sequence review interface.}
+\label{fig:segments_ui}
+\end{figure}
+
+\section{Results and Discussion}
+The pipeline delivers consistent prelabel outputs across multiple bags and supports both raw and map-stabilized sequences. Tracking and interpolation reduce label flicker and improve review efficiency. Sequence uploads are organized into manageable chunks for usability and performance during labeling sessions on Segments.ai. \cite{segmentsai}
+
+Engineering trade-offs include:
+\begin{itemize}
+\item \textbf{Accuracy vs. speed:} PointRCNN-IoU improves quality but is slower than PointPillars.
+\item \textbf{Automation vs. correctness:} tracking reduces manual effort but requires careful validation.
+\item \textbf{Domain mismatch:} pretrained models provide a baseline but are not optimized for indoor scenes.
+\end{itemize}
+
+\section{Limitations}
+\begin{itemize}
+\item Pretrained models are not tuned for indoor hospital environments.
+\item Tracking uses a simple distance-based association and may fail under heavy occlusions.
+\item GPU acceleration and ROS Noetic are required for practical throughput.
+\end{itemize}
+
+\section{Conclusion}
+This repository provides a clear, reproducible pipeline for generating LiDAR-based pedestrian prelabels from Budd-e robot recordings. It prioritizes transparent data handling, consistent outputs, and an annotation-friendly workflow suitable for academic review and dataset expansion. The system is ready for delivery and can be extended with fine-tuning, stronger tracking, or additional models as the dataset grows.
+
+\begin{filecontents*}{references.bib}
+@inproceedings{kitti2012,
+  title={Are we ready for autonomous driving? The KITTI vision benchmark suite},
+  author={Geiger, Andreas and Lenz, Philip and Urtasun, Raquel},
+  booktitle={CVPR},
+  year={2012}
+}
+@article{openpcdet2020,
+  title={OpenPCDet: An open-source toolbox for 3D object detection from point clouds},
+  author={OpenPCDet Authors},
+  journal={arXiv preprint arXiv:2008.06899},
+  year={2020}
+}
+@inproceedings{pointrcnn2019,
+  title={PointRCNN: 3D object proposal generation and detection from point cloud},
+  author={Shi, Shaoshuai and Wang, Xiaogang and Li, Hongsheng},
+  booktitle={CVPR},
+  year={2019}
+}
+@inproceedings{pointpillars2019,
+  title={PointPillars: Fast Encoders for Object Detection from Point Clouds},
+  author={Lang, Alex and Vora, Sourabh and Caesar, Holger and Zhou, Lubing and Yang, Jiong and Beijbom, Oscar},
+  booktitle={CVPR},
+  year={2019}
+}
+@article{segmentsai,
+  title={Segments.ai: End-to-end data annotation platform},
+  author={Segments.ai},
+  journal={https://segments.ai},
+  year={2024}
+}
+\end{filecontents*}
+
+\bibliographystyle{ieeetr}
+\bibliography{references}
+
+\end{document}
