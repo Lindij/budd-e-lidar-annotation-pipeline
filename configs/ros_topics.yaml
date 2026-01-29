@@ -1,5 +1,0 @@
-topics:
-  lidar_points: /rslidar_points
-frames:
-  map: map
-  base: base_link

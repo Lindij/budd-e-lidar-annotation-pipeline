@@ -9,4 +9,3 @@ track_use_motion: false
 map_frame_enabled: true
 map_source_frame: rslidar
 map_target_frame: map
-label_class: Pedestrian
