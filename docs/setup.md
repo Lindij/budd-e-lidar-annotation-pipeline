@@ -77,5 +77,6 @@ scripts/upload_tracks.sh \
   --sample-name 2023-06-27-16-15-39_pointrcnn_iou_map
 ```
 
-## 6) Colab
-If you need a notebook flow, see `docs/colab_instructions.md`.
+## 6) Notes
+- ROS bags are not stored in git; place them under `data/raw/rosbags/`.
+- Use `docs/rosbag_inventory.txt` to verify expected bag names.

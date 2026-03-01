@@ -103,7 +103,7 @@ Module & Responsibility \\
 \texttt{src/ingest/rosbag\_to\_pcdet.py} & ROS1 PointCloud2 to \texttt{.bin} frames \\
 \texttt{src/inference/pcdet\_infer\_dir.py} & Run OpenPCDet inference \\
 \texttt{src/export/export\_pedestrians.py} & Filter and export pedestrian labels \\
-\texttt{tools/track\_pedestrians.py} & Track association and interpolation \\
+\texttt{src/tools/tracking/track\_pedestrians.py} & Track association and interpolation \\
 \texttt{scripts/transform\_bins\_tf.py} & Optional map-frame point cloud transform \\
 \texttt{scripts/transform\_labels\_tf.py} & Optional map-frame label transform \\
 \texttt{src/export/segments\_upload\_sequence.py} & Upload sequences to Segments.ai \\
@@ -159,6 +159,9 @@ Engineering trade-offs include:
 
 \section{Conclusion}
 This repository provides a clear, reproducible pipeline for generating LiDAR-based pedestrian prelabels from Budd-e robot recordings. It prioritizes transparent data handling, consistent outputs, and an annotation-friendly workflow suitable for academic review and dataset expansion. The system is ready for delivery and can be extended with fine-tuning, stronger tracking, or additional models as the dataset grows.
+
+\section*{Acknowledgments}
+This work was carried out within the research support activities of the project ``2025\_VALCOMP\_DEIB\_146 - Implementazione di un algoritmo di collision avoidance per una sedia a rotelle autonoma in ambienti popolati - PRIN 2022 - CARE - 20225LX9M3, CUP D53D23001020006'' at the Dipartimento di Elettronica, Informazione e Bioingegneria, Politecnico di Milano, under the responsibility of Prof. Marcello Farina.
 
 \begin{filecontents*}{references.bib}
 @inproceedings{kitti2012,

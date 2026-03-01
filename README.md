@@ -6,6 +6,7 @@ LiDAR-only pipeline to extract point clouds from ROS1 bag files, run pretrained 
 - Report: `reports/report.tex`
 - Setup + run: `docs/setup.md`
 - Bag inventory: `docs/rosbag_inventory.txt`
+- Processed data (Segments.ai): [link to processed data](https://app.segments.ai/Mahi_j/budd-e)
 
 ## Current Status
 - ROS bag ingestion working (topic: `/rslidar_points`).
@@ -56,6 +57,7 @@ python -m pip install --upgrade pip setuptools wheel
 ```
 For setup and run instructions, see `docs/setup.md`.
 For the ROS bag list, see `docs/rosbag_inventory.txt`.
+If bag files are not present locally, add them to `data/raw/rosbags/` before running the pipeline.
 
 ### OpenPCDet patch (optional datasets)
 OpenPCDet may import optional datasets (e.g., Argo2) that are not installed. Apply this patch to avoid
@@ -171,6 +173,9 @@ scripts/upload_tracks.sh \
 
 ## Reports
 - `reports/report.tex`
+
+## Acknowledgments
+This repository was developed as part of the CARE project (PRIN 2022), funded within the DEIB research group at Politecnico di Milano.
 
 ## Future Development
 - Add a script to merge split Segments.ai samples back into one per rosbag.
